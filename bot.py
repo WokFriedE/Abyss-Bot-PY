@@ -1,4 +1,3 @@
-from colorama import Fore
 import discord
 import os
 from dotenv import load_dotenv, find_dotenv
