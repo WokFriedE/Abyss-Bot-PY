@@ -1,4 +1,4 @@
-import discord
+from discord import commands
 
 
 async def main(message, PREFIX):
