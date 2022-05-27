@@ -9,7 +9,6 @@ TOKEN = os.getenv("TOKEN")
 GUILD = os.getenv("GUILD_ID")
 
 intents = discord.Intents.default()
-intents.message_content = True
 client = commands.Bot(command_prefix='!', intents=intents)
 
 valid_channels = ['general', 'tst']
@@ -27,7 +26,7 @@ async def on_ready():
 
 @client.command()
 async def ping(ctx):
-    await ctx.send('pong')
+    await ctx.reply('pong')
 
 client.run(TOKEN)
 

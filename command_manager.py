@@ -1,6 +1,3 @@
-from discord import commands
-
-
 async def main(message, PREFIX):
     username = str(message.author).split("#")[0]
     # turns jaja#0000 to [jaja, 0000] and then [jaja]
