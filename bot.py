@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv, find_dotenv
-from command_manager import main
 
 load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")
@@ -12,7 +11,6 @@ intents = discord.Intents.default()
 client = commands.Bot(command_prefix='!', intents=intents)
 
 valid_channels = ['general', 'tst']
-PREFIX = "!"
 
 
 @client.event
@@ -29,5 +27,3 @@ async def ping(ctx):
     await ctx.reply('pong')
 
 client.run(TOKEN)
-
-# comment
