@@ -18,6 +18,7 @@ load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")
 GUILD = os.getenv("GUILD_ID")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+AUTHOR = os.getenv("AUTHOR")
 
 # Establishes bot
 intents = discord.Intents.default()
@@ -174,7 +175,7 @@ async def deleteEmoji(ctx, emoji):
         return
 
 
-@ client.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote")
+@client.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote")
 async def getEmoji(ctx, emoji):
     try:
         emoji = emoji.split(':')[2].strip('>')
