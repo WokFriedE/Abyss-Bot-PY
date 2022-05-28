@@ -133,7 +133,13 @@ async def deleteEmoji(ctx, emoji):
 
 
 @ client.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote")
-async def getEmoji(ctx, emoji: discord.Emoji):
+async def getEmoji(ctx, emoji):
+    try:
+        emoji = emoji.split(':')[2].strip('>')
+        emoji = await ctx.guild.fetch_emoji(int(emoji))
+    except:
+        await ctx.send('Not an emoji on this server')
+        return
     await ctx.send(emoji.url)
 
 
