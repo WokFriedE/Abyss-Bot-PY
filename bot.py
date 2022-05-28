@@ -1,4 +1,5 @@
 from email import message
+from time import time
 from turtle import title
 from unicodedata import name
 from venv import create
@@ -34,7 +35,8 @@ client = commands.Bot(command_prefix=',', intents=intents, help_command=None)
 
 def createEmbeded(title=None, desc=None, color=None, image=None, url=None):
     embed = discord.Embed(title=title, description=desc, color=color)
-    embed.set_image(url=image)
+    if image is not None:
+        embed.set_image(url=image)
     return embed
 
 
@@ -65,11 +67,9 @@ async def help(ctx):
     for command in client.commands:
         helpText += f'{command.name}'
         if(command.aliases != []):
-            helpText += f' ({", ".join(command.aliases)})'
+            helpText += f' [{", ".join(command.aliases)}]'
         helpText += f'\n{command.description}\n\n'
-    embed = discord.Embed(title="Help", description=helpText,
-                          color=discord.Color.dark_teal())
-    await ctx.send(embed=embed)
+    await ctx.send(embed=createEmbeded(title="Help", desc=helpText, color=discord.Color.dark_teal()))
 
 #============================================================#
 # Random Commands
@@ -163,9 +163,9 @@ async def newEmoji(ctx, name, item):
 
 @client.command(name="deleteEmoji", aliases=['e'], description="Removes an emote on the server")
 async def deleteEmoji(ctx, emoji):
-    if not ctx.author.guild_permissions.manage_emojis:
-        await ctx.send('Invalid perms')
-        return
+    # if (not ctx.author.guild_permissions.manage_emojis):
+    #     await ctx.send('Invalid perms')
+    #     return
 
     def check(reaction, user):
         return user == ctx.author and str(reaction.emoji) == "✅" and reaction.message.id == msg.id
@@ -200,8 +200,12 @@ async def getEmoji(ctx, emoji):
     await ctx.send(emoji.url)
 
 
-@client.command(name="pollNewEmoji", description="Creates a poll to add an emote", aliases=['pne'])
+@client.command(name="pollNewEmoji", description="Creates a poll to add an emote\npollNewEmoji (time) (name) (emoji)", aliases=['pne'])
 async def pollNewEmoji(ctx, seconds="0", name="", emoji=""):
+    if seconds == 0:
+        await ctx.reply('Please provide a time')
+        return
+
     votes = {"yes": [], "no": []}
 
     def check(reaction, user):
@@ -248,8 +252,12 @@ async def pollNewEmoji(ctx, seconds="0", name="", emoji=""):
         return
 
 
-@client.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote", aliases=['pde'])
+@client.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote\npollDeleteEmoji (time) (emoji)", aliases=['pde'])
 async def pollNewEmoji(ctx, seconds="0", emoji=""):
+    if seconds == 0:
+        await ctx.reply('Please provide a time')
+        return
+
     votes = {"yes": [], "no": []}
 
     def check(reaction, user):
