@@ -100,7 +100,6 @@ list = []
 list = [i.name for i in aghpbRepo.get_contents(
     "/") if i.type == "dir" and i.name not in list and i.name != "Uncategorized"]
 
-
 @client.command(name="study",  aliases=['s'], description="Gets a random image from the Github repo")
 async def study(ctx, *args):
     if len(args) > 1:
