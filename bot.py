@@ -140,6 +140,7 @@ async def getEmoji(ctx, emoji):
     except:
         await ctx.send('Not an emoji on this server')
         return
+    await ctx.send(f'```{emoji.url}```')
     await ctx.send(emoji.url)
 
 
