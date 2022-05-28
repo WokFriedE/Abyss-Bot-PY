@@ -28,6 +28,13 @@ async def on_ready():
     print('{0.user} has connected to Discord '.format(client) + f'{guild.name}')
 
 
+@client.command(name="credits")
+async def credits(ctx):
+    embed = discord.Embed(
+        title="Credits", description="This bot was made by Actronav and WokFriedE to do some random commands!", url="https://github.com/WokFriedE/Abyss-Bot-PY", color=discord.Color.dark_gold())
+    await ctx.send(embed=embed)
+
+
 @client.command()
 async def ping(ctx):
     await ctx.reply('pong')
@@ -88,7 +95,7 @@ async def deleteEmoji(ctx, emoji):
         try:
             message = await ctx.reply(f'Would you like to delete {emojiDel}')
             await message.add_reaction("✅")
-            reaction, user = await client.wait_for(event='reaction_add', timeout=60.0, check=check)
+            await client.wait_for(event='reaction_add', timeout=60.0, check=check)
         except asyncio.TimeoutError:
             await ctx.send('Invalid Timing')
         else:
