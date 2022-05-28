@@ -5,6 +5,7 @@ from dotenv import load_dotenv, find_dotenv
 from github import Github
 import random
 
+
 load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")
 GUILD = os.getenv("GUILD_ID")
@@ -57,5 +58,18 @@ async def study(ctx, *args):
 async def studymaterials(ctx):
     text = "```" + "\n".join(list) + "```"
     await ctx.send(text)
+
+@client.command()
+async def say(ctx, *arg):
+    await ctx.send(" ".join(arg))
+    await ctx.message.delete()
+
+@client.command()
+async def add(ctx, *args):
+    try:
+        args = [int(i) for i in args]
+        await ctx.send(f'The sum is {sum(args)}')
+    except:
+        await ctx.send('Please enter numbers only')
 
 client.run(TOKEN)
