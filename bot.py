@@ -17,6 +17,7 @@ import random
 load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")
 GUILD = os.getenv("GUILD_ID")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix=',', intents=intents, help_command=None)
@@ -90,7 +91,7 @@ async def test(ctx):
 # Random Github image Commands
 #============================================================#
 
-git = Github("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")
+git = Github(GITHUB_TOKEN)
 aghpbRepo = git.get_repo("cat-milk/Anime-Girls-Holding-Programming-Books")
 list = ['AI', 'APL', 'ASM', 'Ada', 'Agda', 'Algorithms', 'Architecture', 'Beef', 'C#', 'C++', 'C', 'CSS', 'Cobol', 'Compilers', 'D', 'Dart', 'Delphi', 'Design Patterns', 'Editors', 'Elixir', 'Elm', 'F#', 'FORTH', 'Fortran', 'GDScript', 'Go', 'Haskell', 'HoTT', 'HolyC', 'Idris', 'Java', 'Javascript', 'Kotlin', 'Lisp', 'Lua', 'Math', 'Memes', 'Mixed', 'MongoDB',
         'Nim', 'OCaml', 'Objective-C', 'Other', 'PHP', 'Perl', 'Personification', 'Prolog', 'Python', 'Quantum Computing', 'R', 'Racket', 'RayTracing', 'ReCT', 'Regex', 'Ruby', 'Rust', 'SICP', 'SQL', 'Scala', 'Shell', 'Smalltalk', 'Solidity', 'Swift', 'Systems', 'Typescript', 'Uncategorized', 'Unity', 'Unreal', 'V', 'VHDL', 'Verilog', 'Visual Basic', 'WebGL']
