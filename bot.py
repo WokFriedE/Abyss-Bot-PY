@@ -155,9 +155,9 @@ async def newEmoji(ctx, name, item):
         img.save(b, format="PNG")
         b_value = b.getvalue()
         emoji = await ctx.guild.create_custom_emoji(name=name, image=b_value)
-        await ctx.send(f'created the emoji <:{name}:{emoji.id}>')
+        await ctx.send(embed=createEmbeded(title="Added Emoji", desc=f"The emoji: {emoji.name}, was successfully added!", color=discord.Color.green(), image=emoji.url))
     else:
-        await ctx.send('This server does not support gifs')
+        await ctx.send(embed=createEmbeded(title="Error", desc="This server does not support gifs", color=discord.Color.red()))
         return
 
 
@@ -174,17 +174,16 @@ async def deleteEmoji(ctx, emoji):
         emoji = emoji.split(':')[2].strip('>')
         emojiDel = await ctx.guild.fetch_emoji(int(emoji))
         try:
-            msg = await ctx.reply(f'Would you like to delete {emojiDel}')
+            msg = await ctx.reply(embed=createEmbeded(title="Delete Emoji?", desc=f"Do you want to delete {emojiDel.name}", color=discord.Color.blurple(), image=emojiDel.url))
             await msg.add_reaction("✅")
             await client.wait_for(event='reaction_add', timeout=60.0, check=check)
         except asyncio.TimeoutError:
-            await ctx.send('Invalid Timing')
+            await ctx.send(embed=createEmbeded(title="Error", desc="Timeout", color=discord.Color.red()))
         else:
-            await ctx.send(f'deleted the emoji <:{emojiDel.name}:{emojiDel.id}>')
+            await ctx.send(embed=createEmbeded(title="Deleted Emoji", desc="Deleted the emoji", color=discord.Color.green(), image=emojiDel.url))
             await msg.delete()
-            await emojiDel.delete()
     except:
-        await ctx.send('Not an emoji on this server')
+        await ctx.send(embed=createEmbeded(title="Error", desc="Invalid Emoji", color=discord.Color.red()))
         return
 
 
@@ -196,8 +195,7 @@ async def getEmoji(ctx, emoji):
     except:
         await ctx.send('Not an emoji on this server')
         return
-    await ctx.send(f'```{emoji.url}```')
-    await ctx.send(emoji.url)
+    await ctx.send(embed=createEmbeded("Emoji", emoji.url, discord.Color.blue(), emoji.url))
 
 
 @client.command(name="pollNewEmoji", description="Creates a poll to add an emote\npollNewEmoji (time) (name) (emoji)", aliases=['pne'])
@@ -230,7 +228,7 @@ async def pollNewEmoji(ctx, seconds="0", name="", emoji=""):
                 await ctx.send('Not an emoji that can be added')
                 return
 
-        msg = await ctx.send(embed=createEmbeded(f"Add the emoji '{name}'", f"Would you like to add '{name}' to the server?\n{ctx.author.mention} can exit the poll using 💣 or end it using 🔚", discord.Color.green(), emoji))
+        msg = await ctx.send(embed=createEmbeded(f"Add the emoji '{name}'", f"Would you like to add '{name}' to the server?\n{ctx.author.mention} can exit the poll using 💣 or end it using 🔚", discord.Color.blurple(), emoji))
         await msg.add_reaction("✅")
         await msg.add_reaction("❌")
         await msg.add_reaction("💣")
@@ -280,7 +278,7 @@ async def pollNewEmoji(ctx, seconds="0", emoji=""):
             await ctx.send('Not an emoji that can be deleted')
             return
 
-        msg = await ctx.send(embed=createEmbeded(f"Remove the emoji '{emoji.name}'", f"Would you like to add '{emoji.name}' to the server?\n{ctx.author.mention} can exit the poll using 💣 or end it using 🔚", discord.Color.green(), emoji.url))
+        msg = await ctx.send(embed=createEmbeded(f"Remove the emoji '{emoji.name}'", f"Would you like to add '{emoji.name}' to the server?\n{ctx.author.mention} can exit the poll using 💣 or end it using 🔚", discord.Color.blurple(), emoji.url))
         await msg.add_reaction("✅")
         await msg.add_reaction("❌")
         await msg.add_reaction("💣")
@@ -291,13 +289,16 @@ async def pollNewEmoji(ctx, seconds="0", emoji=""):
         return
     except asyncio.TimeoutError:
         if len(votes["yes"]) > len(votes["no"]):
+            # Vote logic if pass
             await client.loop.create_task(deleteEmoji(ctx, f'<:{emoji.name}:{emoji.id}>'))
             await msg.delete()
         else:
+            # Vote logic if not yes
             await msg.edit(embed=createEmbeded(f"Failed to remove the emoji '{emoji.name}'", f"Poll majority was not yes for '{emoji.name}'", discord.Color.red(), emoji.url))
             await msg.clear_reactions()
             return
     else:
+        # If force exited
         await msg.edit(embed=createEmbeded(f"Remove the emoji '{emoji.name}'", f"Poll was exited for {emoji.name}", discord.Color.orange(), emoji))
         return
 
