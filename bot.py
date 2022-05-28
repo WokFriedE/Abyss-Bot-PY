@@ -1,4 +1,3 @@
-from http.client import FORBIDDEN
 import discord  # requires "discord.py"
 from discord.ext import commands
 import os
@@ -7,6 +6,7 @@ from dotenv import load_dotenv, find_dotenv  # requires "dotenv"
 import requests  # requires "requests"
 from io import BytesIO
 from PIL import Image  # requires "Pillow"
+import asyncio
 
 
 load_dotenv(find_dotenv())
@@ -51,6 +51,8 @@ async def add(ctx, *args):
 @client.command(name="test", aliases=['t'])
 async def test(ctx):
     print(client.emojis)
+    await client.loop.create_task(newEmoji(ctx, "test", "https://cdn.discordapp.com/emojis/431642989660471297.webp?size=80&quality=lossless"))
+    message = await ctx.send("<:white_check_mark:979970509204770817>")
 
 
 @client.command(name="newEmoji", aliases=['ne'])
@@ -76,18 +78,31 @@ async def deleteEmoji(ctx, emoji):
     if not ctx.author.guild_permissions.manage_emojis:
         await ctx.send('Invalid perms')
         return
+
+    def check(reaction, user):
+        return user == ctx.author and str(reaction.emoji) == "✅" and reaction.message.id == message.id
+
     try:
         emoji = emoji.split(':')[2].strip('>')
         emojiDel = await ctx.guild.fetch_emoji(int(emoji))
-        await ctx.send(f'deleted the emoji <:{emojiDel.name}:{emojiDel.id}>')
-        await emojiDel.delete()
+        try:
+            message = await ctx.reply(f'Would you like to delete {emojiDel}')
+            await message.add_reaction("✅")
+            reaction, user = await client.wait_for(event='reaction_add', timeout=60.0, check=check)
+        except asyncio.TimeoutError:
+            await ctx.send('Invalid Timing')
+        else:
+            await ctx.send(f'deleted the emoji <:{emojiDel.name}:{emojiDel.id}>')
+            await message.delete()
+            await emojiDel.delete()
     except:
         await ctx.send('Not an emoji on this server')
         return
 
 
-@client.command(name="getEmoji", aliases=['ge'])
+@ client.command(name="getEmoji", aliases=['ge'])
 async def getEmoji(ctx, emoji: discord.Emoji):
     await ctx.send(emoji.url)
+
 
 client.run(TOKEN)
