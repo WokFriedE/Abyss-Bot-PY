@@ -10,20 +10,24 @@ from io import BytesIO
 from PIL import Image  # requires "Pillow"
 import asyncio
 
-from github import Github
+from github import Github  # requires "pyGithub"
 import random
 
-
+# Tokens
 load_dotenv(find_dotenv())
 TOKEN = os.getenv("TOKEN")
 GUILD = os.getenv("GUILD_ID")
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+AUTHOR = os.getenv("AUTHOR")
 
+# Establishes bot
 intents = discord.Intents.default()
 client = commands.Bot(command_prefix=',', intents=intents, help_command=None)
 
 
 @client.event
 async def on_ready():
+    # Server check
     for guild in client.guilds:
         if guild.name == GUILD:
             break
@@ -90,11 +94,11 @@ async def test(ctx):
 # Random Github image Commands
 #============================================================#
 
-git = Github("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")
+git = Github(GITHUB_TOKEN)
 aghpbRepo = git.get_repo("cat-milk/Anime-Girls-Holding-Programming-Books")
-list = ['AI', 'APL', 'ASM', 'Ada', 'Agda', 'Algorithms', 'Architecture', 'Beef', 'C#', 'C++', 'C', 'CSS', 'Cobol', 'Compilers', 'D', 'Dart', 'Delphi', 'Design Patterns', 'Editors', 'Elixir', 'Elm', 'F#', 'FORTH', 'Fortran', 'GDScript', 'Go', 'Haskell', 'HoTT', 'HolyC', 'Idris', 'Java', 'Javascript', 'Kotlin', 'Lisp', 'Lua', 'Math', 'Memes', 'Mixed', 'MongoDB',
-        'Nim', 'OCaml', 'Objective-C', 'Other', 'PHP', 'Perl', 'Personification', 'Prolog', 'Python', 'Quantum Computing', 'R', 'Racket', 'RayTracing', 'ReCT', 'Regex', 'Ruby', 'Rust', 'SICP', 'SQL', 'Scala', 'Shell', 'Smalltalk', 'Solidity', 'Swift', 'Systems', 'Typescript', 'Uncategorized', 'Unity', 'Unreal', 'V', 'VHDL', 'Verilog', 'Visual Basic', 'WebGL']
-
+list = []
+list = [i.name for i in aghpbRepo.get_contents(
+    "/") if i.type == "dir" and i.name not in list and i.name != "Uncategorized"]
 
 @client.command(name="study",  aliases=['s'], description="Gets a random image from the Github repo")
 async def study(ctx, *args):
@@ -170,7 +174,7 @@ async def deleteEmoji(ctx, emoji):
         return
 
 
-@ client.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote")
+@client.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote")
 async def getEmoji(ctx, emoji):
     try:
         emoji = emoji.split(':')[2].strip('>')
