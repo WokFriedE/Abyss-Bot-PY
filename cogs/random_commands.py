@@ -29,13 +29,13 @@ class Random_Commands(commands.Cog):
     #============================================================#
 
     @commands.command(name="credits", description="Displays the credits of the bot")
-    async def credits(ctx):
+    async def credits(self, ctx):
         embed = discord.Embed(
             title="Credits", description="This bot was made by Actronav and WokFriedE to do some random commands!", url="https://github.com/WokFriedE/Abyss-Bot-PY", color=discord.Color.dark_gold())
         await ctx.send(embed=embed)
 
     @commands.command(name="help", aliases=["h"], description="Shows the commands of the bot")
-    async def help(ctx):
+    async def help(self, ctx):
         helpText = ''
         for command in self.client.commands:
             helpText += f'{command.name}'
