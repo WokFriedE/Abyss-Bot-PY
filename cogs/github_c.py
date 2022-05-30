@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from github import Github
 import random
-
+from bot import *
 import os
 
 
@@ -25,12 +25,16 @@ class Github_Commands(commands.Cog):
             fileSet = (self.aghpbRepo.get_contents(""))
             randImageSet = (self.aghpbRepo.get_contents(
                 (fileSet[random.randrange(0, len(fileSet))]).name))
-            await ctx.send(((randImageSet[random.randrange(0, len(randImageSet))]).html_url) + "?raw=true")
+            image_url = (
+                (randImageSet[random.randrange(0, len(randImageSet))]).html_url)
+            await ctx.send(embed=createEmbeded(title="Random Image", desc="", color=discord.Color.blue(), image=(image_url + "?raw=true"), url=image_url))
         else:
             for x in self.gitList:
                 if x == args[0]:
                     imageSet = (self.aghpbRepo.get_contents(args[0]))
-                    await ctx.send(((imageSet[random.randrange(0, len(imageSet))]).html_url) + "?raw=true")
+                    image_url = (
+                        (imageSet[random.randrange(0, len(imageSet))]).html_url)
+                    await ctx.send(embed=createEmbeded(title="Random Image", desc=f"from {args[0]}", color=discord.Color.blue(), image=(image_url + "?raw=true"), url=image_url))
                     return True
 
             await ctx.send("Invalid study material, use .studymaterials or .sm to find valid ones")
