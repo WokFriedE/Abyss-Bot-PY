@@ -105,6 +105,8 @@ async def on_command_error(ctx, error):
         await ctx.reply("Too many arguments.")
     elif(isinstance(error, commands.BadArgument)):
         await ctx.reply("Bad argument.")
+    elif(isinstance(error, commands.CheckFailure)):
+        await ctx.reply(f"{error}")
     else:
         await ctx.reply("An error has occurd\n" + error)
 
