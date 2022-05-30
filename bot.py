@@ -20,7 +20,7 @@ client = commands.Bot(command_prefix=',', intents=intents, help_command=None)
 #============================================================#
 
 
-def createEmbeded(title=None, desc=None, color=None, image=None, url=None):
+def createEmbeded(title="", desc="", color=discord.Color.teal(), image=None, url=""):
     embed = discord.Embed(title=title, description=desc, color=color, url=url)
     if image is not None:
         embed.set_image(url=image)
@@ -105,5 +105,7 @@ async def on_command_error(ctx, error):
         await ctx.reply("Too many arguments.")
     elif(isinstance(error, commands.BadArgument)):
         await ctx.reply("Bad argument.")
+    else:
+        await ctx.reply("An error has occurd\n" + error)
 
 client.run(TOKEN)
