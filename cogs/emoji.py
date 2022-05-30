@@ -9,12 +9,16 @@ import asyncio
 
 
 class Emoji(commands.Cog):
+    __requireRole = True
 
     def __init__(self, client):
         self.client = client
         self.polls = {}
 
-    @commands.command(name="newEmoji", aliases=['ne'], description="Adds a new emote to the server")
+    #============================================================#
+    # Functions for emojis
+    #============================================================#
+
     async def newEmoji(self, ctx, name, item):
         response = requests.get(item)
         img = Image.open(BytesIO(response.content))
@@ -31,9 +35,7 @@ class Emoji(commands.Cog):
             await ctx.send(embed=createEmbeded(title="Error", desc="This server does not support gifs", color=discord.Color.red()))
             return
 
-    @commands.command(name="deleteEmoji", aliases=['de'], description="Removes an emote on the server")
     async def deleteEmoji(self, ctx, emoji):
-
         def check(reaction, user):
             if(user == ctx.author and str(reaction.emoji) == "✅" and reaction.message.id == msg.id):
                 return True
@@ -60,6 +62,20 @@ class Emoji(commands.Cog):
             if msg.id in self.polls:
                 self.polls.pop(msg.id)
 
+    #============================================================#
+    # Simple add, remove, get emojis
+    #============================================================#
+
+    @commands.command(name="addEmoji", aliases=['addE'], description="Adds a new emote to the server")
+    @commands.has_permissions(manage_emojis=True)
+    async def addEmoji(self, ctx, name, emoji):
+        await self.newEmoji(ctx, name, emoji)
+
+    @commands.command(name="removeEmoji", aliases=['removeE'], description="Removes an emote on the server")
+    @commands.has_permissions(manage_emojis=True)
+    async def remove_emoji(self, ctx, name, emoji):
+        await self.deleteEmoji(ctx, name, emoji)
+
     @commands.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote")
     async def getEmoji(self, ctx, emoji):
         try:
@@ -70,14 +86,18 @@ class Emoji(commands.Cog):
             return
         await ctx.send(embed=createEmbeded("Emoji", emoji.url, discord.Color.blue(), emoji.url))
 
-    @commands.command(name="pollNewEmoji", description="Creates a poll to add an emote\npollNewEmoji (name) (emoji) (time)", aliases=['pne'])
+    #============================================================#
+    # Polling commands for adding and removing emojis
+    #============================================================#
+
+    @commands.command(name="pollNewEmoji", description="Creates a poll to add an emote\npollNewEmoji (name) (emoji) (time: optional)", aliases=['pne'])
     async def pollNewEmoji(self, ctx, name="", emoji="", seconds="20"):
         if seconds == 0:
             await ctx.reply('Please provide a time')
             return
 
-        if len(list(filter(lambda role: role.name == "emojiRole", ctx.author.roles))) == 0:
-            await ctx.send('You do not have the required permissions')
+        if(self.client.has_role("emojiRole") == False and self.requireRole == True):
+            await ctx.reply('You do not have the emoji role')
             return
 
         def check(reaction, user):
@@ -122,14 +142,11 @@ class Emoji(commands.Cog):
             if msg.id in self.polls:
                 self.polls.pop(msg.id)
 
-    @commands.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote\npollDeleteEmoji (emoji) (time)", aliases=['pde'])
+    @commands.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote\npollDeleteEmoji (emoji) (time: optional)", aliases=['pde'])
+    @commands.has_role("emojiRole" if __requireRole else "")
     async def pollDeleteEmoji(self, ctx, emoji="", seconds="20"):
         if seconds == 0:
             await ctx.reply('Please provide a time')
-            return
-
-        if len(list(filter(lambda role: role.name == "emojiRole", ctx.author.roles))) == 0:
-            await ctx.send('You do not have the required permissions')
             return
 
         def check(reaction, user):
@@ -175,6 +192,10 @@ class Emoji(commands.Cog):
         finally:
             if msg.id in self.polls:
                 self.polls.pop(msg.id)
+
+    #============================================================#
+    # Listeners for reactions to polls
+    #============================================================#
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
