@@ -33,6 +33,9 @@ def createEmbeded(title=None, desc=None, color=None, image=None, url=None):
 
 @client.command()
 async def load(ctx, extension):
+    if(not ctx.author.guild_permissions.administrator):
+        await ctx.reply("You do not have permission to use this command.")
+        return
     extension = extension.lower()
     try:
         client.load_extension(f'cogs.{extension}')
@@ -43,6 +46,9 @@ async def load(ctx, extension):
 
 @client.command()
 async def unload(ctx, extension):
+    if(not ctx.author.guild_permissions.administrator):
+        await ctx.reply("You do not have permission to use this command.")
+        return
     extension = extension.lower()
     try:
         client.unload_extension(f'cogs.{extension}')
@@ -57,6 +63,9 @@ for filename in os.listdir('./cogs'):
 
 @client.command(name="reload", description="Reloads all cogs")
 async def reload(ctx):
+    if(not ctx.author.guild_permissions.administrator):
+        await ctx.reply("You do not have permission to use this command.")
+        return
     for filename in os.listdir('./cogs'):
         try:
             if filename.endswith('.py'):
