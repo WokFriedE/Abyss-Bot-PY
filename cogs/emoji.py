@@ -12,6 +12,7 @@ class Emoji(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.polls = {}
 
     @commands.command(name="newEmoji", aliases=['ne'], description="Adds a new emote to the server")
     async def newEmoji(self, ctx, name, item):
@@ -55,6 +56,9 @@ class Emoji(commands.Cog):
         except:
             await ctx.send(embed=createEmbeded(title="Error", desc="Invalid Emoji", color=discord.Color.red()))
             return
+        finally:
+            if msg.id in self.polls:
+                self.polls.pop(msg.id)
 
     @commands.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote")
     async def getEmoji(self, ctx, emoji):
@@ -76,23 +80,11 @@ class Emoji(commands.Cog):
             await ctx.send('You do not have the required permissions')
             return
 
-        votes = {"yes": [], "no": []}
-
         def check(reaction, user):
             if(user == ctx.author and str(reaction.emoji) == "💣"):
                 return user == ctx.author and str(reaction.emoji) == "💣" and reaction.message.id == msg.id
             elif(user == ctx.author and str(reaction.emoji) == "🔚"):
                 raise asyncio.TimeoutError("User ended poll")
-            elif(str(reaction.emoji) == "✅" and user not in votes["yes"]):
-                votes["yes"].append(user)
-                if(user in votes["no"]):
-                    votes["no"].remove(user)
-                return False
-            elif(str(reaction.emoji) == "❌" and user not in votes["no"]):
-                votes["no"].append(user)
-                if(user in votes["yes"]):
-                    votes["yes"].remove(user)
-                return False
 
         try:
             try:
@@ -109,24 +101,29 @@ class Emoji(commands.Cog):
             await msg.add_reaction("❌")
             await msg.add_reaction("💣")
             await msg.add_reaction("🔚")
+            self.polls[msg.id] = {'yes': [], 'no': []}
             await self.client.wait_for(event="reaction_add", check=check, timeout=float(seconds))
         except ValueError:
             await ctx.send('Invalid time given')
             return
         except asyncio.TimeoutError:
-            if len(votes["yes"]) > len(votes["no"]):
+            if len(self.polls[msg.id]["yes"]) > len(self.polls[msg.id]["no"]):
                 await self.client.loop.create_task(self.newEmoji(ctx, name=name, item=emoji))
                 await msg.delete()
             else:
-                await msg.edit(embed=createEmbeded(f"Failed to add the emoji '{name}'", f"Poll majority was not yes for '{name}'", discord.Color.red(), emoji))
+                await msg.edit(embed=createEmbeded(f"Failed to add the emoji '{name}'", f"Poll majority was not yes for '{name}'", discord.Color.red(), emoji.url))
                 await msg.clear_reactions()
                 return
         else:
-            await msg.edit(embed=createEmbeded(f"Add the emoji '{name}'", f"Poll was exited for {name}", discord.Color.orange(), emoji))
+            await msg.edit(embed=createEmbeded(f"Add the emoji '{name}'", f"Poll was exited for {name}", discord.Color.orange(), emoji.url))
+            await msg.clear_reactions()
             return
+        finally:
+            if msg.id in self.polls:
+                self.polls.pop(msg.id)
 
     @commands.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote\npollDeleteEmoji (emoji) (time)", aliases=['pde'])
-    async def pollNewEmoji(self, ctx, emoji="", seconds="20"):
+    async def pollDeleteEmoji(self, ctx, emoji="", seconds="20"):
         if seconds == 0:
             await ctx.reply('Please provide a time')
             return
@@ -135,23 +132,11 @@ class Emoji(commands.Cog):
             await ctx.send('You do not have the required permissions')
             return
 
-        votes = {"yes": [], "no": []}
-
         def check(reaction, user):
             if(user == ctx.author and str(reaction.emoji) == "💣"):
                 return user == ctx.author and str(reaction.emoji) == "💣" and reaction.message.id == msg.id
             elif(user == ctx.author and str(reaction.emoji) == "🔚"):
                 raise asyncio.TimeoutError("User ended poll")
-            elif(str(reaction.emoji) == "✅" and user not in votes["yes"]):
-                votes["yes"].append(user)
-                if(user in votes["no"]):
-                    votes["no"].remove(user)
-                return False
-            elif(str(reaction.emoji) == "❌" and user not in votes["no"]):
-                votes["no"].append(user)
-                if(user in votes["yes"]):
-                    votes["yes"].remove(user)
-                return False
 
         try:
             try:
@@ -166,15 +151,17 @@ class Emoji(commands.Cog):
             await msg.add_reaction("❌")
             await msg.add_reaction("💣")
             await msg.add_reaction("🔚")
+            self.polls[msg.id] = {'yes': [], 'no': []}
             await self.client.wait_for(event="reaction_add", check=check, timeout=float(seconds))
         except ValueError:
             await ctx.send('Invalid time given')
             return
         except asyncio.TimeoutError:
-            if len(votes["yes"]) > len(votes["no"]):
+            if len(self.polls[msg.id]["yes"]) > len(self.polls[msg.id]["no"]):
                 # Vote logic if pass
                 await self.client.loop.create_task(self.deleteEmoji(ctx, f'<:{emoji.name}:{emoji.id}>'))
                 await msg.delete()
+                return
             else:
                 # Vote logic if not yes
                 await msg.edit(embed=createEmbeded(f"Failed to remove the emoji '{emoji.name}'", f"Poll majority was not yes for '{emoji.name}'", discord.Color.red(), emoji.url))
@@ -182,8 +169,40 @@ class Emoji(commands.Cog):
                 return
         else:
             # If force exited
-            await msg.edit(embed=createEmbeded(f"Remove the emoji '{emoji.name}'", f"Poll was exited for {emoji.name}", discord.Color.orange(), emoji))
+            await msg.edit(embed=createEmbeded(f"Remove the emoji '{emoji.name}'", f"Poll was exited for {emoji.name}", discord.Color.orange(), emoji.url))
+            await msg.clear_reactions()
             return
+        finally:
+            if msg.id in self.polls:
+                self.polls.pop(msg.id)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if self.client.get_user(payload.user_id):
+            return
+
+        if payload.message_id in self.polls:
+            channel = self.client.get_channel(payload.channel_id)
+            msg = await channel.fetch_message(payload.message_id)
+            if str(payload.emoji) == "✅":
+                self.polls[payload.message_id]["yes"].append(payload.user_id)
+                if(payload.user_id in self.polls[payload.message_id]["no"]):
+                    await msg.remove_reaction("❌", payload.member)
+            elif str(payload.emoji) == "❌":
+                self.polls[payload.message_id]["no"].append(payload.user_id)
+                if(payload.user_id in self.polls[payload.message_id]["yes"]):
+                    await msg.remove_reaction("✅", payload.member)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        if self.client.get_user(payload.user_id):
+            return
+
+        if payload.message_id in self.polls:
+            if str(payload.emoji) == "✅":
+                self.polls[payload.message_id]["yes"].remove(payload.user_id)
+            elif str(payload.emoji) == "❌":
+                self.polls[payload.message_id]["no"].remove(payload.user_id)
 
 
 def setup(client):
