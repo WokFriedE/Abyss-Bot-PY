@@ -87,12 +87,23 @@ async def on_ready():
     for guild in client.guilds:
         if guild.name == GUILD:
             break
-
     print('{0.user} has connected to Discord '.format(client) + f'{guild.name}')
 
 
 @client.command(name="cogs", description="Shows the cogs of the bot")
 async def cogs(ctx):
     await ctx.send(f'{", ".join(client.cogs)}')
+
+
+@client.event
+async def on_command_error(ctx, error):
+    if(isinstance(error, commands.CommandNotFound)):
+        ctx.reply("Command not found.")
+    elif(isinstance(error, commands.MissingRequriedArgument)):
+        ctx.reply("Missing required argument.")
+    elif(isinstance(error, commands.TooManyArguments)):
+        ctx.reply("Too many arguments.")
+    elif(isinstance(error, commands.BadArgument)):
+        ctx.reply("Bad argument.")
 
 client.run(TOKEN)
