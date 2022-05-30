@@ -21,7 +21,7 @@ client = commands.Bot(command_prefix=',', intents=intents, help_command=None)
 
 
 def createEmbeded(title=None, desc=None, color=None, image=None, url=None):
-    embed = discord.Embed(title=title, description=desc, color=color)
+    embed = discord.Embed(title=title, description=desc, color=color, url=url)
     if image is not None:
         embed.set_image(url=image)
     return embed
@@ -33,6 +33,9 @@ def createEmbeded(title=None, desc=None, color=None, image=None, url=None):
 
 @client.command()
 async def load(ctx, extension):
+    if(not ctx.author.guild_permissions.administrator):
+        await ctx.reply("You do not have permission to use this command.")
+        return
     extension = extension.lower()
     try:
         client.load_extension(f'cogs.{extension}')
@@ -43,6 +46,9 @@ async def load(ctx, extension):
 
 @client.command()
 async def unload(ctx, extension):
+    if(not ctx.author.guild_permissions.administrator):
+        await ctx.reply("You do not have permission to use this command.")
+        return
     extension = extension.lower()
     try:
         client.unload_extension(f'cogs.{extension}')
@@ -57,6 +63,9 @@ for filename in os.listdir('./cogs'):
 
 @client.command(name="reload", description="Reloads all cogs")
 async def reload(ctx):
+    if(not ctx.author.guild_permissions.administrator):
+        await ctx.reply("You do not have permission to use this command.")
+        return
     for filename in os.listdir('./cogs'):
         try:
             if filename.endswith('.py'):
@@ -78,12 +87,23 @@ async def on_ready():
     for guild in client.guilds:
         if guild.name == GUILD:
             break
-
     print('{0.user} has connected to Discord '.format(client) + f'{guild.name}')
 
 
 @client.command(name="cogs", description="Shows the cogs of the bot")
 async def cogs(ctx):
     await ctx.send(f'{", ".join(client.cogs)}')
+
+
+@client.event
+async def on_command_error(ctx, error):
+    if(isinstance(error, commands.CommandNotFound)):
+        await ctx.reply("Command not found.")
+    elif(isinstance(error, commands.MissingRequiredArgument)):
+        await ctx.reply("Missing required argument.")
+    elif(isinstance(error, commands.TooManyArguments)):
+        await ctx.reply("Too many arguments.")
+    elif(isinstance(error, commands.BadArgument)):
+        await ctx.reply("Bad argument.")
 
 client.run(TOKEN)
