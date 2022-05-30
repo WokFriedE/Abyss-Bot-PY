@@ -38,6 +38,13 @@ class Tests(commands.Cog):
             await msg.remove_reaction("✅", ctx.author)
         print(type(ctx.author), id, self.client.get_guild(guild).get_member(id))
 
+    @commands.command()
+    async def checkRole(self, ctx, role: discord.Role):
+        if(role in ctx.author.roles):
+            await ctx.send("<:white_check_mark:979970509204770817>")
+        else:
+            await ctx.send("<:x:97997050920477088>")
+
 
 def setup(client):
     client.add_cog(Tests(client))
