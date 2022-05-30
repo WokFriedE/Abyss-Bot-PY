@@ -21,7 +21,7 @@ client = commands.Bot(command_prefix=',', intents=intents, help_command=None)
 
 
 def createEmbeded(title=None, desc=None, color=None, image=None, url=None):
-    embed = discord.Embed(title=title, description=desc, color=color)
+    embed = discord.Embed(title=title, description=desc, color=color, url=url)
     if image is not None:
         embed.set_image(url=image)
     return embed
@@ -98,12 +98,12 @@ async def cogs(ctx):
 @client.event
 async def on_command_error(ctx, error):
     if(isinstance(error, commands.CommandNotFound)):
-        ctx.reply("Command not found.")
-    elif(isinstance(error, commands.MissingRequriedArgument)):
-        ctx.reply("Missing required argument.")
+        await ctx.reply("Command not found.")
+    elif(isinstance(error, commands.MissingRequiredArgument)):
+        await ctx.reply("Missing required argument.")
     elif(isinstance(error, commands.TooManyArguments)):
-        ctx.reply("Too many arguments.")
+        await ctx.reply("Too many arguments.")
     elif(isinstance(error, commands.BadArgument)):
-        ctx.reply("Bad argument.")
+        await ctx.reply("Bad argument.")
 
 client.run(TOKEN)
