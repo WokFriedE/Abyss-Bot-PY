@@ -1,8 +1,7 @@
-import discord  # requires "discord.py"
-from discord.ext import commands
 import os
 from dotenv import load_dotenv, find_dotenv  # requires "dotenv"
-
+import discord
+from discord.ext import commands
 
 # Tokens
 load_dotenv(find_dotenv())
@@ -13,7 +12,6 @@ AUTHOR = os.getenv("AUTHOR")
 
 # Establishes bot
 intents = discord.Intents.default()
-# , help_command=None
 client = commands.Bot(command_prefix=',', intents=intents)
 
 #============================================================#
@@ -70,7 +68,7 @@ client.help_command = CustomHelpCommand()
 #============================================================#
 
 
-@ client.command(cog="Admin")
+@ client.command(name="load", description="Loads a cog")
 async def load(ctx, extension):
     if(not ctx.author.guild_permissions.administrator):
         await ctx.reply("You do not have permission to use this command.")
@@ -83,7 +81,7 @@ async def load(ctx, extension):
         await ctx.send(f'Could not load {extension}')
 
 
-@ client.command()
+@ client.command(name="unload", description="Unloads a cog")
 async def unload(ctx, extension):
     if(not ctx.author.guild_permissions.administrator):
         await ctx.reply("You do not have permission to use this command.")
