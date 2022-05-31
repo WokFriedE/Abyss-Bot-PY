@@ -8,7 +8,7 @@ from PIL import Image  # requires "Pillow"
 import asyncio
 
 
-class Emoji(commands.Cog):
+class Emojis(commands.Cog):
     __requireRole = True
 
     def __init__(self, client):
@@ -61,6 +61,9 @@ class Emoji(commands.Cog):
         finally:
             if msg.id in self.polls:
                 self.polls.pop(msg.id)
+
+    def getPolls(self):
+        return self.polls
 
     #============================================================#
     # Simple add, remove, get emojis
@@ -227,4 +230,4 @@ class Emoji(commands.Cog):
 
 
 def setup(client):
-    client.add_cog(Emoji(client))
+    client.add_cog(Emojis(client))
