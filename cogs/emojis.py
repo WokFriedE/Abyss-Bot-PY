@@ -62,9 +62,6 @@ class Emojis(commands.Cog):
             if msg.id in self.polls:
                 self.polls.pop(msg.id)
 
-    def getPolls(self):
-        return self.polls
-
     #============================================================#
     # Simple add, remove, get emojis
     #============================================================#
@@ -89,18 +86,19 @@ class Emojis(commands.Cog):
             return
         await ctx.send(embed=createEmbeded("Emoji", emoji.url, discord.Color.blue(), emoji.url))
 
+    @commands.command()
+    async def checkPolls(self, ctx):
+        await ctx.send(self.polls)
+
     #============================================================#
     # Polling commands for adding and removing emojis
     #============================================================#
 
     @commands.command(name="pollNewEmoji", description="Creates a poll to add an emote\npollNewEmoji (name) (emoji) (time: optional)", aliases=['pne'])
+    @commands.has_role("emojiRole" if __requireRole else "")
     async def pollNewEmoji(self, ctx, name="", emoji="", seconds="20"):
         if seconds == 0:
             await ctx.reply('Please provide a time')
-            return
-
-        if(self.client.has_role("emojiRole") == False and self.requireRole == True):
-            await ctx.reply('You do not have the emoji role')
             return
 
         def check(reaction, user):
