@@ -38,7 +38,7 @@ class CustomHelpCommand(commands.HelpCommand):
 
     async def send_bot_help(self, mapping):
         embeded = discord.Embed(
-            title="__Help__", description="Provides help commands", color=discord.Color.dark_teal())
+            title="__Help__", description="Provides help commands\nhelp\nhelp <category>\nhelp <command>", color=discord.Color.dark_teal())
         for cog in mapping:
             embeded.add_field(name=f'''{str(cog.qualified_name if cog != None else None)}''', value="\n".join(
                 "> " + client.command_prefix + command.name for command in mapping[cog]), inline=False)
