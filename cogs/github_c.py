@@ -17,7 +17,7 @@ class Github_Commands(commands.Cog):
         self.gitList = [i.name for i in self.aghpbRepo.get_contents(
             "/") if i.type == "dir" and i.name not in self.gitList and i.name != "Uncategorized"]
 
-    @commands.command(name="study",  aliases=['s'], description="Gets a random image from the Github repo")
+    @commands.command(name="study",  aliases=['s'], description="Gets a random image from the Github repo", usage="study\nstudy <category>")
     async def study(self, ctx, *args):
         if len(args) > 1:
             await ctx.send("No more than one input allowed")
@@ -39,7 +39,7 @@ class Github_Commands(commands.Cog):
 
             await ctx.send("Invalid study material, use .studymaterials or .sm to find valid ones")
 
-    @commands.command(name="studymaterials",  aliases=['sm'], description="Lists the \"study materials\"")
+    @commands.command(name="studymaterials",  aliases=['sm'], description="Lists the \"study materials\"", usage="studymaterials")
     async def studymaterials(self, ctx):
         text = "```" + "\n".join(self.gitList) + "```"
         await ctx.send(text)

@@ -8,7 +8,7 @@ class Roles(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(name="role", description="Creates a role\nrole (name)", aliases=['r'])
+    @commands.command(name="role", description="Creates a role\nrole (name)", aliases=['r'], usage="role <name>")
     async def role(self, ctx, name=""):
         if name == "":
             await ctx.send('Please provide a name')
@@ -17,7 +17,7 @@ class Roles(commands.Cog):
         ctx.guild.create_role(name=name)
         await ctx.send(embed=createEmbeded(f"Created role '{name}'", f"{ctx.author.mention} created role '{name}'", discord.Color.green()))
 
-    @commands.command(name="roleEmojis", description="Gives someone the power to make emoji votes", aliases=['rE'])
+    @commands.command(name="roleEmojis", description="Gives someone the power to make emoji votes", aliases=['rE'], usage="roleEmojis @<user>")
     async def roleEmojis(self, ctx, user):
         if(not ctx.author.guild_permissions.manage_roles):
             await ctx.reply('You do not have the perms to use this command')
@@ -45,7 +45,7 @@ class Roles(commands.Cog):
             print(e)
             return
 
-    @commands.command(name="roleRemoveEmojis", description="Removes the power to make emoji votes", aliases=['rRE'])
+    @commands.command(name="roleRemoveEmojis", description="Removes the power to make emoji votes", aliases=['rRE'], usage="roleRemoveEmojis @<user>")
     async def roleRemoveEmojis(self, ctx, user):
         if(not ctx.author.guild_permissions.manage_roles):
             await ctx.reply('You do not have the perms to use this command')
@@ -68,7 +68,7 @@ class Roles(commands.Cog):
             await ctx.send(embed=createEmbeded(f"Failed to remove {user.name} the perms for emojis", f"{ctx.author.mention} failed to remove {user.mention} the power to make emoji votes", discord.Color.red()))
             return
 
-    @commands.command(name="purgeRole", description="Purges a role", aliases=['pr'])
+    @commands.command(name="purgeRole", description="Purges a role", aliases=['pr'], usage="purgeRole <role>")
     async def purgeRole(self, ctx, roleDel):
         if(not ctx.author.guild_permissions.manage_roles):
             await ctx.reply('You do not have the perms to use this command')

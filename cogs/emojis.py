@@ -66,17 +66,21 @@ class Emojis(commands.Cog):
     # Simple add, remove, get emojis
     #============================================================#
 
-    @commands.command(name="addEmoji", aliases=['addE'], description="Adds a new emote to the server")
+    @commands.command(name="Check Polls", description="Returns a list of polls for debuggin", usage="checkPolls")
+    async def checkPolls(self, ctx):
+        await ctx.send(self.polls)
+
+    @commands.command(name="addEmoji", aliases=['addE'], description="Adds a new emote to the server", usage="addEmoji <name> <url>")
     @commands.has_permissions(manage_emojis=True)
     async def addEmoji(self, ctx, name, emoji):
         await self.newEmoji(ctx, name, emoji)
 
-    @commands.command(name="removeEmoji", aliases=['removeE'], description="Removes an emote on the server")
+    @commands.command(name="removeEmoji", aliases=['removeE'], description="Removes an emote on the server", usage="removeEmoji <emoji>")
     @commands.has_permissions(manage_emojis=True)
     async def remove_emoji(self, ctx, name, emoji):
         await self.deleteEmoji(ctx, name, emoji)
 
-    @commands.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote")
+    @commands.command(name="getEmoji", aliases=['ge'], description="Gets the URL of an emote", usage="getEmoji <emoji>")
     async def getEmoji(self, ctx, emoji):
         try:
             emoji = emoji.split(':')[2].strip('>')
@@ -86,15 +90,11 @@ class Emojis(commands.Cog):
             return
         await ctx.send(embed=createEmbeded("Emoji", emoji.url, discord.Color.blue(), emoji.url))
 
-    @commands.command()
-    async def checkPolls(self, ctx):
-        await ctx.send(self.polls)
-
     #============================================================#
     # Polling commands for adding and removing emojis
     #============================================================#
 
-    @commands.command(name="pollNewEmoji", description="Creates a poll to add an emote\npollNewEmoji (name) (emoji) (time: optional)", aliases=['pne'])
+    @commands.command(name="pollNewEmoji", description="Creates a poll to add an emote", aliases=['pne'], usage="pollNewEmoji <name> <emoji> <time: optional>")
     @commands.has_role("emojiRole" if __requireRole else "")
     async def pollNewEmoji(self, ctx, name="", emoji="", seconds="20"):
         if seconds == 0:
@@ -143,9 +143,9 @@ class Emojis(commands.Cog):
             if msg.id in self.polls:
                 self.polls.pop(msg.id)
 
-    @commands.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote\npollDeleteEmoji (emoji) (time: optional)", aliases=['pde'])
+    @commands.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote", aliases=['pde'], usage="pollDeleteEmoji <name> <emoji> <time: optional>")
     @commands.has_role("emojiRole" if __requireRole else "")
-    async def pollDeleteEmoji(self, ctx, emoji="", seconds="20"):
+    async def pollDeleteEmoji(self, ctx, emoji: discord.Emoji, seconds="20"):
         if seconds == 0:
             await ctx.reply('Please provide a time')
             return

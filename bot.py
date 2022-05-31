@@ -13,7 +13,8 @@ AUTHOR = os.getenv("AUTHOR")
 
 # Establishes bot
 intents = discord.Intents.default()
-client = commands.Bot(command_prefix=',', intents=intents, help_command=None)
+# , help_command=None
+client = commands.Bot(command_prefix=',', intents=intents)
 
 #============================================================#
 # Functions
@@ -27,11 +28,49 @@ def createEmbeded(title="", desc="", color=discord.Color.teal(), image=None, url
     return embed
 
 #============================================================#
-# Initialization Code
+# Custom Help Command
 #============================================================#
 
 
-@client.command()
+class CustomHelpCommand(commands.HelpCommand):
+    def __init__(self):
+        super().__init__()
+
+    async def send_bot_help(self, mapping):
+        embeded = discord.Embed(
+            title="__Help__", description="Provides help commands", color=discord.Color.dark_teal())
+        for cog in mapping:
+            embeded.add_field(name=f'''{str(cog.qualified_name if cog != None else None)}''', value="\n".join(
+                "> " + client.command_prefix + command.name for command in mapping[cog]), inline=False)
+        await self.get_destination().send(embed=embeded)
+
+    async def send_cog_help(self, cog):
+        embeded = discord.Embed(
+            title=f"__Help for '{cog.qualified_name}'__", color=discord.Color.dark_teal())
+        embeded.add_field(name=f"{str(cog.qualified_name if cog != None else None)}", value="\n".join(
+            "> " + client.command_prefix + command.name for command in cog.get_commands()), inline=False)
+        await self.get_destination().send(embed=embeded)
+
+    async def send_command_help(self, command):
+        embeded = discord.Embed(
+            title=f"__Help for '{command.name}'__", description=str(command.description), color=discord.Color.dark_teal())
+        if(command.aliases != []):
+            embeded.add_field(name="Aliases", value=", ".join(
+                command.aliases), inline=False)
+        embeded.add_field(name="Usage", value=(str(
+            command.usage) if command.usage != None else "Just use by iteself"), inline=False)
+
+        await self.get_destination().send(embed=embeded)
+
+
+client.help_command = CustomHelpCommand()
+
+#============================================================#
+# Cog Commands
+#============================================================#
+
+
+@ client.command(cog="Admin")
 async def load(ctx, extension):
     if(not ctx.author.guild_permissions.administrator):
         await ctx.reply("You do not have permission to use this command.")
@@ -44,7 +83,7 @@ async def load(ctx, extension):
         await ctx.send(f'Could not load {extension}')
 
 
-@client.command()
+@ client.command()
 async def unload(ctx, extension):
     if(not ctx.author.guild_permissions.administrator):
         await ctx.reply("You do not have permission to use this command.")
@@ -61,7 +100,7 @@ for filename in os.listdir('./cogs'):
         client.load_extension(f'cogs.{filename[:-3]}')
 
 
-@client.command(name="reload", description="Reloads all cogs")
+@ client.command(name="reload", description="Reloads all cogs")
 async def reload(ctx):
     if(not ctx.author.guild_permissions.administrator):
         await ctx.reply("You do not have permission to use this command.")
@@ -76,12 +115,21 @@ async def reload(ctx):
     await ctx.send('Reloaded all cogs')
 
 
-@client.command(name="possibleCategories", description="Reloads all cogs")
+#============================================================#
+# Events and other commands for cogs
+#============================================================#
+
+@ client.command(name="possibleCategories", description="Reloads all cogs")
 async def possibleCategories(ctx):
     await ctx.send(embed=createEmbeded("Possible Categories", "\n".join([cog[:-3] for cog in os.listdir('./cogs') if cog.endswith('.py')]), discord.Color.dark_teal()))
 
 
-@client.event
+@ client.command(name="cogs", description="Shows the cogs of the bot")
+async def cogs(ctx):
+    await ctx.send(f'{", ".join(client.cogs)}')
+
+
+@ client.event
 async def on_ready():
     # Server check
     for guild in client.guilds:
@@ -90,12 +138,7 @@ async def on_ready():
     print('{0.user} has connected to Discord '.format(client) + f'{guild.name}')
 
 
-@client.command(name="cogs", description="Shows the cogs of the bot")
-async def cogs(ctx):
-    await ctx.send(f'{", ".join(client.cogs)}')
-
-
-@client.event
+@ client.event
 async def on_command_error(ctx, error):
     if(isinstance(error, commands.CommandNotFound)):
         await ctx.reply("Command not found.")
@@ -108,6 +151,6 @@ async def on_command_error(ctx, error):
     elif(isinstance(error, commands.CheckFailure)):
         await ctx.reply(f"{error}")
     else:
-        await ctx.reply("An error has occurd\n" + error)
+        await ctx.reply("An error has occurd\n" + str(error))
 
 client.run(TOKEN)

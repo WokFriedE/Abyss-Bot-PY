@@ -1,3 +1,4 @@
+from http import client
 import discord
 from discord.ext import commands
 import asyncio
@@ -44,6 +45,10 @@ class Tests(commands.Cog):
             await ctx.send("<:white_check_mark:979970509204770817>")
         else:
             await ctx.send("<:x:97997050920477088>")
+
+    @commands.command()
+    async def getCog(self, ctx):
+        await ctx.send(self.client.get_cog("Tests"))
 
 
 def setup(client):
