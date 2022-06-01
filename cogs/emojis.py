@@ -6,6 +6,7 @@ import requests  # requires "requests"
 from io import BytesIO
 from PIL import Image  # requires "Pillow"
 import asyncio
+import json
 
 
 class Emojis(commands.Cog):
@@ -14,6 +15,10 @@ class Emojis(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.polls = {}
+        self.whitelist = True
+        self.min_time = 5
+        with open('whitelist.json', 'r') as f:
+            self.whitelist_json = json.load(f)
 
     #============================================================#
     # Functions for emojis
@@ -91,15 +96,77 @@ class Emojis(commands.Cog):
         await ctx.send(embed=createEmbeded("Emoji", emoji.url, discord.Color.blue(), emoji.url))
 
     #============================================================#
-    # Polling commands for adding and removing emojis
+    # Whitelist/Blacklist commands
     #============================================================#
 
+    @commands.command(name="addChannelEmoji", aliases=["ace"], description="Adds a channel to emoji polling, uses current channel", usage="addChannelEmoji")
+    @commands.has_permissions(administrator=True)
+    async def addChannelEmoji(self, ctx):
+        guildID = str(ctx.guild.id)
+        with open("whitelist.json", "w") as f:
+            if(guildID not in self.whitelist_json):
+                self.whitelist_json[guildID] = [str(ctx.channel.id)]
+            elif(ctx.channel.id not in self.whitelist_json[guildID]):
+                self.whitelist_json[guildID].append(str(ctx.channel.id))
+            else:
+                await ctx.reply(f"{ctx.channel.name} is already in the whitelist")
+            json.dump(self.whitelist_json, f)
+        f.close()
+        await ctx.reply(f"{ctx.channel.name} added from whitelist")
+        return
+
+    @commands.command(name="removeChannelEmoji", aliases=["rce"], description="Removes a channel to emoji polling, uses current channel", usage="addChannelEmoji")
+    @commands.has_permissions(administrator=True)
+    async def removeChannelEmoji(self, ctx):
+        guildID = str(ctx.guild.id)
+        if(guildID not in self.whitelist_json):
+            await ctx.reply("Server is not registered, please whitelist a channel first")
+            return
+        if(str(ctx.channel.id) in self.whitelist_json[guildID]):
+            with open("whitelist.json", "w") as f:
+                self.whitelist_json[guildID].remove(
+                    str(ctx.channel.id))
+                json.dump(self.whitelist_json, f)
+            f.close()
+            await ctx.reply(f"{ctx.channel.name} removed from whitelist")
+
+    @commands.command(name="checkWhitelist", aliases=["cw"], description="Checks the whitelist", usage="checkWhitelist")
+    @commands.has_permissions(administrator=True)
+    async def checkWhitelist(self, ctx):
+        if(str(ctx.guild.id) in self.whitelist_json):
+            await ctx.reply(f"{ctx.guild.name} is registered")
+        else:
+            await ctx.reply(f"{ctx.guild.name} is not registered")
+        await ctx.send(self.whitelist_json)
+        return
+
+    @commands.command(name="clearWhitelist", aliases=["clrw"], description="Checks the whitelist", usage="checkWhitelist")
+    @commands.has_permissions(administrator=True)
+    async def clearWhitelist(self, ctx):
+        if(str(ctx.guild.id) in self.whitelist_json):
+            with open("whitelist.json", "w") as f:
+                self.whitelist_json.pop(str(ctx.guild.id))
+                json.dump(self.whitelist_json, f)
+            f.close()
+            await ctx.reply(f"{ctx.guild.name} whitelist cleared")
+            return
+        await ctx.reply(f"{ctx.guild.name} is not registered")
+        return
+
+    #============================================================#
+    # Polling commands for adding and removing emojis
+    #============================================================#
     @commands.command(name="pollNewEmoji", description="Creates a poll to add an emote", aliases=['pne'], usage="pollNewEmoji <name> <emoji> <time: optional>")
     @commands.has_role("emojiRole" if __requireRole else "")
-    async def pollNewEmoji(self, ctx, name="", emoji="", seconds="20"):
-        if seconds == 0:
-            await ctx.reply('Please provide a time')
-            return
+    async def pollNewEmoji(self, ctx, name="", emoji="", seconds: float = 20):
+
+        if self.whitelist:
+            if str(ctx.guild.id) not in self.whitelist_json:
+                await ctx.reply("Server is not registered, please whitelist a channel first")
+                return
+            if str(ctx.channel.id) not in self.whitelist_json[str(ctx.guild.id)]:
+                await ctx.reply("Channel is not whitelisted")
+                return
 
         def check(reaction, user):
             if(user == ctx.author and str(reaction.emoji) == "💣"):
@@ -108,6 +175,7 @@ class Emojis(commands.Cog):
                 raise asyncio.TimeoutError("User ended poll")
 
         try:
+
             try:
                 emoji = emoji.split(':')[2].strip('>')
                 emoji = await ctx.guild.fetch_emoji(int(emoji))
@@ -125,7 +193,7 @@ class Emojis(commands.Cog):
             self.polls[msg.id] = {'yes': [], 'no': []}
             await self.client.wait_for(event="reaction_add", check=check, timeout=float(seconds))
         except ValueError:
-            await ctx.send('Invalid time given')
+            await ctx.send('Invalid value for time given')
             return
         except asyncio.TimeoutError:
             if len(self.polls[msg.id]["yes"]) > len(self.polls[msg.id]["no"]):
@@ -145,10 +213,15 @@ class Emojis(commands.Cog):
 
     @commands.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote", aliases=['pde'], usage="pollDeleteEmoji <name> <emoji> <time: optional>")
     @commands.has_role("emojiRole" if __requireRole else "")
-    async def pollDeleteEmoji(self, ctx, emoji: discord.Emoji, seconds="20"):
-        if seconds == 0:
-            await ctx.reply('Please provide a time')
-            return
+    async def pollDeleteEmoji(self, ctx, emoji: discord.Emoji, seconds: float = 20):
+
+        if self.whitelist:
+            if str(ctx.guild.id) not in self.whitelist_json:
+                await ctx.reply("Server is not registered, please whitelist a channel first")
+                return
+            if str(ctx.channel.id) not in self.whitelist_json[str(ctx.guild.id)]:
+                await ctx.reply("Channel is not whitelisted")
+                return
 
         def check(reaction, user):
             if(user == ctx.author and str(reaction.emoji) == "💣"):

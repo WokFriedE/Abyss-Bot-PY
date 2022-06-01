@@ -50,6 +50,18 @@ class Tests(commands.Cog):
     async def getCog(self, ctx):
         await ctx.send(self.client.get_cog("Tests"))
 
+    @commands.command()
+    async def getInfo(self, ctx):
+        embeded = discord.Embed(
+            title="__Info__", description="Information about the situation", color=discord.Color.dark_teal())
+        embeded.add_field(name="Server Info",
+                          value=f"{ctx.guild.name}: {ctx.guild.id}")
+        embeded.add_field(name="Channel Info",
+                          value=f"{ctx.channel.name}: {ctx.channel.id}")
+        embeded.add_field(name="User Info",
+                          value=f"{ctx.author.name}: {ctx.author.id}")
+        await ctx.send(embed=embeded)
+
 
 def setup(client):
     client.add_cog(Tests(client))
