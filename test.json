@@ -1,0 +1,8 @@
+{
+    {
+        "id": "guild_id",
+        "haveWhitelist": true,
+        "whitelist": [],
+        "requireRoles": true
+    }
+}
