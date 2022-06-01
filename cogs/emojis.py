@@ -17,8 +17,16 @@ class Emojis(commands.Cog):
         self.polls = {}
         self.whitelist = True
         self.min_time = 5
-        with open('whitelist.json', 'r') as f:
-            self.whitelist_json = json.load(f)
+        try:
+            with open('whitelist.json', 'r+') as f:
+                self.whitelist_json = json.load(f)
+            f.close()
+        except FileNotFoundError:
+            with open('whitelist.json', 'w+') as f:
+                json.dump({}, f)
+                f.close()
+            self.whitelist_json = {}
+            # restructure whitelist
 
     #============================================================#
     # Functions for emojis
@@ -162,7 +170,7 @@ class Emojis(commands.Cog):
 
         if self.whitelist:
             if str(ctx.guild.id) not in self.whitelist_json:
-                await ctx.reply("Server is not registered, please whitelist a channel first")
+                await ctx.reply("Server is not registered for whitelist, please whitelist a channel first")
                 return
             if str(ctx.channel.id) not in self.whitelist_json[str(ctx.guild.id)]:
                 await ctx.reply("Channel is not whitelisted")
@@ -217,7 +225,7 @@ class Emojis(commands.Cog):
 
         if self.whitelist:
             if str(ctx.guild.id) not in self.whitelist_json:
-                await ctx.reply("Server is not registered, please whitelist a channel first")
+                await ctx.reply("Server is not registered for whitelist, please whitelist a channel first")
                 return
             if str(ctx.channel.id) not in self.whitelist_json[str(ctx.guild.id)]:
                 await ctx.reply("Channel is not whitelisted")
