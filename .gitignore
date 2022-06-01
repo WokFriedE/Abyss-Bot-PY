@@ -2,3 +2,5 @@
 __pycache__
 bot-env
 whitelist.json
+settings.json
+test

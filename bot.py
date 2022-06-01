@@ -149,6 +149,8 @@ async def on_command_error(ctx, error):
         await ctx.reply("Bad argument.")
     elif(isinstance(error, commands.CheckFailure)):
         await ctx.reply(f"{error}")
+    elif(isinstance(error, commands.DisabledCommand)):
+        await ctx.reply(f"{error}")
     else:
         await ctx.reply("An error has occurd\n" + str(error))
 
