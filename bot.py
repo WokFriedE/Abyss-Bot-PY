@@ -131,9 +131,10 @@ async def cogs(ctx):
 async def on_ready():
     # Server check
     for guild in client.guilds:
-        if guild.name == GUILD:
-            break
-    print('{0.user} has connected to Discord '.format(client) + f'{guild.name}')
+        print('{0.user} has connected to Discord '.format(
+            client) + f'{guild.name}')
+    print(f'Logged in as {client.user} ({client.user.id})')
+    print('------------------------------------')
 
 
 @ client.event
