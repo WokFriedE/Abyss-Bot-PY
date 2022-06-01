@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv, find_dotenv  # requires "dotenv"
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 # Tokens
@@ -11,12 +12,48 @@ GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 AUTHOR = os.getenv("AUTHOR")
 
 # Establishes bot
-intents = discord.Intents.default()
-client = commands.Bot(command_prefix=',', intents=intents)
+
+
+class MyClient(commands.Bot):
+    def __init__(self):
+        intents = discord.Intents.default()
+        super().__init__(command_prefix=",", intents=intents)
+
+    async def startup(self):
+        await client.copy_global_to(guild=GUILD)
+        await client.tree.sync(guild=GUILD)
+
+    async def setup_hook(self):
+        for filename in os.listdir("./cogs"):
+            if filename.endswith(".py"):
+                try:
+                    await client.load_extension(f"cogs.{filename[:-3]}")
+                    print(f"Loaded {filename}")
+                except Exception as e:
+                    print(f"Failed to load {filename}")
+                    print(e)
+                self.loop.create_task(self.startup())
+
+
+client = MyClient()
+
+
+@ client.event
+async def on_ready():
+    # Server check
+    for guild in client.guilds:
+        if guild.name == GUILD:
+            break
+    print('{0.user} has connected to Discord '.format(client) + f'{guild.name}')
+
 
 #============================================================#
 # Functions
 #============================================================#
+
+@client.tree.command()
+async def pings(interaction: discord.Interaction):
+    await interaction.response.send_message('pong')
 
 
 def createEmbeded(title="", desc="", color=discord.Color.teal(), image=None, url=""):
@@ -68,37 +105,33 @@ client.help_command = CustomHelpCommand()
 #============================================================#
 
 
-@ client.command(name="load", description="Loads a cog")
+@ commands.command(name="load", description="Loads a cog")
 async def load(ctx, extension):
     if(not ctx.author.guild_permissions.administrator):
         await ctx.reply("You do not have permission to use this command.")
         return
     extension = extension.lower()
     try:
-        client.load_extension(f'cogs.{extension}')
+        await client.load_extension(f'cogs.{extension}')
         await ctx.send(f'Loaded {extension}')
     except:
         await ctx.send(f'Could not load {extension}')
 
 
-@ client.command(name="unload", description="Unloads a cog")
+@ commands.command(name="unload", description="Unloads a cog")
 async def unload(ctx, extension):
     if(not ctx.author.guild_permissions.administrator):
         await ctx.reply("You do not have permission to use this command.")
         return
     extension = extension.lower()
     try:
-        client.unload_extension(f'cogs.{extension}')
+        await client.unload_extension(f'cogs.{extension}')
         await ctx.send(f'Unloaded {extension}')
     except:
         await ctx.send(f'Could not unload {extension}')
 
-for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
-        client.load_extension(f'cogs.{filename[:-3]}')
 
-
-@ client.command(name="reload", description="Reloads all cogs")
+@ client.tree.command(name="reload", description="Reloads all cogs")
 async def reload(ctx):
     if(not ctx.author.guild_permissions.administrator):
         await ctx.reply("You do not have permission to use this command.")
@@ -117,23 +150,14 @@ async def reload(ctx):
 # Events and other commands for cogs
 #============================================================#
 
-@ client.command(name="possibleCategories", description="Reloads all cogs")
+@ client.tree.command(name="possiblecategories", description="Reloads all cogs")
 async def possibleCategories(ctx):
     await ctx.send(embed=createEmbeded("Possible Categories", "\n".join([cog[:-3] for cog in os.listdir('./cogs') if cog.endswith('.py')]), discord.Color.dark_teal()))
 
 
-@ client.command(name="cogs", description="Shows the cogs of the bot")
+@ client.tree.command(name="cogs", description="Shows the cogs of the bot")
 async def cogs(ctx):
-    await ctx.send(f'{", ".join(client.cogs)}')
-
-
-@ client.event
-async def on_ready():
-    # Server check
-    for guild in client.guilds:
-        if guild.name == GUILD:
-            break
-    print('{0.user} has connected to Discord '.format(client) + f'{guild.name}')
+    await ctx.response.send_message(f'{", ".join(client.cogs)}')
 
 
 @ client.event
