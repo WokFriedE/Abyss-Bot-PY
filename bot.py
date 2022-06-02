@@ -1,7 +1,8 @@
 import os
-from dotenv import load_dotenv, find_dotenv  # requires "dotenv"
+import json
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv, find_dotenv  # requires "dotenv"
 
 # Tokens
 load_dotenv(find_dotenv())
@@ -24,6 +25,13 @@ def createEmbeded(title="", desc="", color=discord.Color.teal(), image=None, url
     if image is not None:
         embed.set_image(url=image)
     return embed
+
+
+def getSettings():
+    with open("settings.json", "r") as f:
+        content = json.load(f)
+    f.close()
+    return content
 
 #============================================================#
 # Custom Help Command
@@ -152,6 +160,7 @@ async def on_command_error(ctx, error):
     elif(isinstance(error, commands.DisabledCommand)):
         await ctx.reply(f"{error}")
     else:
-        await ctx.reply("An error has occurd\n" + str(error))
+        await ctx.reply("An error has occured\n" + str(error))
+        print(error.with_traceback())
 
 client.run(TOKEN)

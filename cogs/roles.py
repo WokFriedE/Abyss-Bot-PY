@@ -18,10 +18,8 @@ class Roles(commands.Cog):
         await ctx.send(embed=createEmbeded(f"Created role '{name}'", f"{ctx.author.mention} created role '{name}'", discord.Color.green()))
 
     @commands.command(name="roleEmojis", description="Gives someone the power to make emoji votes", aliases=['rE'], usage="roleEmojis @<user>")
+    @commands.has_permissions(manage_roles=True)
     async def roleEmojis(self, ctx, user):
-        if(not ctx.author.guild_permissions.manage_roles):
-            await ctx.reply('You do not have the perms to use this command')
-            return
 
         try:
             try:
@@ -46,6 +44,7 @@ class Roles(commands.Cog):
             return
 
     @commands.command(name="roleRemoveEmojis", description="Removes the power to make emoji votes", aliases=['rRE'], usage="roleRemoveEmojis @<user>")
+    @commands.has_permissions(manage_roles=True)
     async def roleRemoveEmojis(self, ctx, user):
         if(not ctx.author.guild_permissions.manage_roles):
             await ctx.reply('You do not have the perms to use this command')
