@@ -44,8 +44,6 @@ class Control(commands.Cog):
             f.close()
 
             for guild in self.client.guilds:
-                print(type(self.json_info[str(guild.id)]),
-                      self.json_info[str(guild.id)])
                 if (str(guild.id) not in self.json_info):
                     self.json_info[str(guild.id)] = {
                         "haveWhitelist": False,
@@ -54,6 +52,22 @@ class Control(commands.Cog):
                     }
             self.saveSettings()
             print("Loaded settings.json")
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        self.updateSettings()
+        self.json_info[str(guild.id)] = {
+            "haveWhitelist": False,
+            "whitelist": [],
+            "requireRoles": True
+        }
+        self.saveSettings()
+
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild):
+        self.updateSettings()
+        del self.json_info[str(guild.id)]
+        self.saveSettings()
 
     @commands.command(name="set", description="Sets a setting for the bot\nrequires admin", usage="set <setting: requireRole/requireWhitelist>")
     @commands.has_permissions(administrator=True)

@@ -13,10 +13,12 @@ class Emojis(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.polls = {}  # put in database later
-        self.settings_json = getSettings()
         self.min_time = 5  # in seconds
 
     @commands.Cog.listener()
+    async def on_ready(self):
+        self.settings_json = getSettings()
+
     #============================================================#
     # Functions for emojis
     #============================================================#
