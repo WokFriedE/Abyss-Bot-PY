@@ -9,18 +9,17 @@ import asyncio
 
 
 class Emojis(commands.Cog):
-    __requireRole = True
 
     def __init__(self, client):
         self.client = client
         self.polls = {}  # put in database later
-        self.whitelist = True
-        self.min_time = 5
+        self.settings_json = getSettings()
+        self.min_time = 5  # in seconds
 
+    @commands.Cog.listener()
     #============================================================#
     # Functions for emojis
     #============================================================#
-
     async def newEmoji(self, ctx, name, item):
         response = requests.get(item)
         img = Image.open(BytesIO(response.content))
@@ -97,17 +96,20 @@ class Emojis(commands.Cog):
     #============================================================#
 
     @commands.command(name="pollNewEmoji", description="Creates a poll to add an emote", aliases=['pne'], usage="pollNewEmoji <name> <emoji> <time: optional>")
-    @commands.has_role("emojiRole" if __requireRole else "")
     async def pollNewEmoji(self, ctx, name="", emoji="", seconds: float = 20):
+        self.settings_json = getSettings()
+        info = self.settings_json[str(ctx.guild.id)]
 
-        if self.whitelist:
-            if str(ctx.guild.id) not in self.whitelist_json:
-                await ctx.reply("Server is not registered for whitelist, please whitelist a channel first")
-                return
-            if str(ctx.channel.id) not in self.whitelist_json[str(ctx.guild.id)]:
-                await ctx.reply("Channel is not whitelisted")
-                return
+        # checks for using the poll
+        if info["haveWhitelist"] and str(ctx.channel.id) not in info["whitelist"]:
+            await ctx.reply(f"{ctx.channel.name} is not whitelisted")
+            return
 
+        if info["requireRoles"] and "emojiRole" not in [role.name for role in ctx.author.roles]:
+            await ctx.reply(f"You do not have the emojiRole to use this\nask an admin to add you to the emojiRole using ,rE")
+            return
+
+        # used to stop the poll through reactions
         def check(reaction, user):
             if(user == ctx.author and str(reaction.emoji) == "💣"):
                 return user == ctx.author and str(reaction.emoji) == "💣" and reaction.message.id == msg.id
@@ -115,7 +117,6 @@ class Emojis(commands.Cog):
                 raise asyncio.TimeoutError("User ended poll")
 
         try:
-
             try:
                 emoji = emoji.split(':')[2].strip('>')
                 emoji = await ctx.guild.fetch_emoji(int(emoji))
@@ -125,6 +126,7 @@ class Emojis(commands.Cog):
                     await ctx.send('Not an emoji that can be added')
                     return
 
+            # creates message
             msg = await ctx.send(embed=createEmbeded(f"Add the emoji '{name}'", f"Would you like to add '{name}' to the server?\n{ctx.author.mention} can exit the poll using 💣 or end it using 🔚", discord.Color.blurple(), emoji))
             await msg.add_reaction("✅")
             await msg.add_reaction("❌")
@@ -136,13 +138,16 @@ class Emojis(commands.Cog):
             await ctx.send('Invalid value for time given')
             return
         except asyncio.TimeoutError:
+            # if poll timesout and majority yes
             if len(self.polls[msg.id]["yes"]) > len(self.polls[msg.id]["no"]):
                 await self.client.loop.create_task(self.newEmoji(ctx, name=name, item=emoji))
                 await msg.delete()
+            # if the poll timesout and majority no
             else:
                 await msg.edit(embed=createEmbeded(f"Failed to add the emoji '{name}'", f"Poll majority was not yes for '{name}'", discord.Color.red(), emoji.url))
                 await msg.clear_reactions()
                 return
+        # if poll is cancelled
         else:
             await msg.edit(embed=createEmbeded(f"Add the emoji '{name}'", f"Poll was exited for {name}", discord.Color.orange(), emoji.url))
             await msg.clear_reactions()
@@ -152,16 +157,18 @@ class Emojis(commands.Cog):
                 self.polls.pop(msg.id)
 
     @commands.command(name="pollDeleteEmoji", description="Creates a poll to delete an emote", aliases=['pde'], usage="pollDeleteEmoji <name> <emoji> <time: optional>")
-    @commands.has_role("emojiRole" if __requireRole else "")
     async def pollDeleteEmoji(self, ctx, emoji: discord.Emoji, seconds: float = 20):
+        self.settings_json = getSettings()
+        info = self.settings_json[str(ctx.guild.id)]
 
-        if self.whitelist:
-            if str(ctx.guild.id) not in self.whitelist_json:
-                await ctx.reply("Server is not registered for whitelist, please whitelist a channel first")
-                return
-            if str(ctx.channel.id) not in self.whitelist_json[str(ctx.guild.id)]:
-                await ctx.reply("Channel is not whitelisted")
-                return
+        # checks for using the poll
+        if info["haveWhitelist"] and (str(ctx.channel.id) not in info["whitelist"]):
+            await ctx.reply(f"{ctx.channel.name} is not whitelisted")
+            return
+
+        if info["requireRoles"] and "emojiRole" not in [role.name for role in ctx.author.roles]:
+            await ctx.reply(f"You do not have the emojiRole to use this\nask an admin to add you to the emojiRole using ,rE")
+            return
 
         def check(reaction, user):
             if(user == ctx.author and str(reaction.emoji) == "💣"):
@@ -170,12 +177,6 @@ class Emojis(commands.Cog):
                 raise asyncio.TimeoutError("User ended poll")
 
         try:
-            try:
-                emoji = emoji.split(':')[2].strip('>')
-                emoji = await ctx.guild.fetch_emoji(int(emoji))
-            except IndexError:
-                await ctx.send('Not an emoji that can be deleted')
-                return
 
             msg = await ctx.send(embed=createEmbeded(f"Remove the emoji '{emoji.name}'", f"Would you like to add '{emoji.name}' to the server?\n{ctx.author.mention} can exit the poll using 💣 or end it using 🔚", discord.Color.blurple(), emoji.url))
             await msg.add_reaction("✅")

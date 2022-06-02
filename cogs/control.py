@@ -7,7 +7,6 @@ import json
 
 
 class Control(commands.Cog):
-    __required_roles = True
     __have_whitelist = False
 
     def __init__(self, client):
@@ -15,9 +14,7 @@ class Control(commands.Cog):
         self.json_info = {}
 
     def updateSettings(self):
-        with open("settings.json", "r") as f:
-            self.json_info = json.load(f)
-        f.close()
+        self.json_info = getSettings()
 
     def saveSettings(self):
         with open("settings.json", "w") as f:
@@ -47,8 +44,9 @@ class Control(commands.Cog):
             f.close()
 
             for guild in self.client.guilds:
+                print(type(self.json_info[str(guild.id)]),
+                      self.json_info[str(guild.id)])
                 if (str(guild.id) not in self.json_info):
-                    x = str(guild.id)
                     self.json_info[str(guild.id)] = {
                         "haveWhitelist": False,
                         "whitelist": [],
@@ -57,21 +55,22 @@ class Control(commands.Cog):
             self.saveSettings()
             print("Loaded settings.json")
 
-    @commands.command(name="set", description="Sets a setting for the bot", usage="set <setting: requireRole/requireWhitelist>")
+    @commands.command(name="set", description="Sets a setting for the bot\nrequires admin", usage="set <setting: requireRole/requireWhitelist>")
     @commands.has_permissions(administrator=True)
     async def set(self, ctx, setting=""):
+        if setting == "":
+            await ctx.send("Please specify a setting: `requireRoles`, `requireWhitelist`")
+            return
+
         info = self.json_info[str(ctx.guild.id)]
         if setting == "requireRoles":
             info["requireRoles"] = not self.json_info[str(
                 ctx.guild.id)]["requireRoles"]
-            await ctx.send("Require roles is now " + "enabled" if info["requireRoles"] else "disabled")
+            await ctx.send("Require roles is now " + ("enabled" if info["requireRoles"] else "disabled"))
         elif setting == "requireWhitelist":
             info["haveWhitelist"] = not self.json_info[str(
                 ctx.guild.id)]["haveWhitelist"]
-            await ctx.send("Whitelist is now " + "enabled" if info["haveWhitelist"] else "disabled")
-        elif setting == "":
-            await ctx.send("Please specify a setting: `requireRoles`, `requireWhitelist`")
-            return
+            await ctx.send("Whitelist is now " + ("enabled" if info["haveWhitelist"] else "disabled"))
         else:
             await ctx.send("An error has occured")
             return
@@ -91,16 +90,19 @@ class Control(commands.Cog):
                           value="Enabled" if info["requireRoles"] else "Disabled")
         whitelist_info = "Enabled" if info["haveWhitelist"] else "Disabled"
         for channel in info["whitelist"]:
+            channel = ctx.guild.get_channel(int(channel))
             if(channel not in ctx.guild.channels):
                 whitelist_info += "\n" + channel + " (Channel not found)"
-            whitelist_info += f"\n{ctx.guild.get_channel(int(channel)).name}: {str(channel)}"
+            else:
+                whitelist_info += f"\n{channel.name}: {str(channel.id)}"
         embeded.add_field(name="Require channel whitelist for emoji votes",
                           value=whitelist_info)
         await ctx.send(embed=embeded)
 
-    @commands.command(name="addChannelEmoji", aliases=["ace"], description="Adds a channel to emoji polling, uses current channel", usage="addChannelEmoji", enabled=__have_whitelist)
+    @commands.command(name="addChannelEmoji", aliases=["ace"], description="Adds a channel to emoji polling, uses current channel\nrequires manage channels", usage="addChannelEmoji", enabled=not __have_whitelist)
     @commands.has_permissions(manage_channels=True)
     async def addChannelEmoji(self, ctx):
+        self.updateSettings()
         info = self.json_info[str(ctx.guild.id)]["whitelist"]
 
         if(str(ctx.channel.id) in info):
@@ -113,22 +115,22 @@ class Control(commands.Cog):
         self.saveSettings()
         await ctx.reply(f"{ctx.channel.name} added from whitelist")
 
-    @commands.command(name="removeChannelEmoji", aliases=["rce"], description="Removes a channel to emoji polling, uses current channel", usage="addChannelEmoji", enabled=__have_whitelist)
+    @commands.command(name="removeChannelEmoji", aliases=["rce"], description="Removes a channel to emoji polling, uses current channel\nrequires manage channels", usage="addChannelEmoji", enabled=not __have_whitelist)
     @commands.has_permissions(manage_channels=True)
     async def removeChannelEmoji(self, ctx):
+        self.updateSettings()
         info = self.json_info[str(ctx.guild.id)]["whitelist"]
 
         if(str(ctx.channel.id) not in info):
             await ctx.reply(f"{ctx.channel.name} is not in the whitelist")
             return
 
-        self.updateSettings()
         info.remove(str(ctx.channel.id))
         self.json_info[str(ctx.guild.id)]["whitelist"] = info
         self.saveSettings()
         await ctx.reply(f"{ctx.channel.name} removed from whitelist")
 
-    @commands.command(name="clearWhitelist", aliases=["clrw"], description="Checks the whitelist", usage="checkWhitelist", enabled=__have_whitelist)
+    @commands.command(name="clearWhitelist", aliases=["clrw"], description="Checks the whitelist\nrequires manage channels", usage="checkWhitelist", enabled=not __have_whitelist)
     @commands.has_permissions(manage_channels=True)
     async def clearWhitelist(self, ctx):
         info = self.getWhitelist(ctx.guild)
@@ -137,6 +139,15 @@ class Control(commands.Cog):
         self.saveSettings()
         await ctx.reply(f"Whitelist cleared for {ctx.guild.name}")
         return
+
+    @commands.command(name="getSettingsJSON", aliases=["gJSON"], description="gets the settings.json\nReqruies being the owner", usage="getSettingsJSON")
+    async def getSettingsJSON(self, ctx):
+        if(str(ctx.author.id) != os.getenv("AUTHOR")):
+            await ctx.reply("You are not the owner of the bot")
+            return
+
+        self.updateSettings()
+        await ctx.send(self.json_info)
 
 
 def setup(client):
