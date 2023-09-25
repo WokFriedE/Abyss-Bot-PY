@@ -13,9 +13,12 @@ class Github_Commands(commands.Cog):
         self.git = Github(os.getenv('GITHUB_TOKEN'))
         self.aghpbRepo = self.git.get_repo(
             "cat-milk/Anime-Girls-Holding-Programming-Books")
+        self.gitListMap = {}
         self.gitList = []
         self.gitList = [i.name for i in self.aghpbRepo.get_contents(
             "/") if i.type == "dir" and i.name not in self.gitList and i.name != "Uncategorized"]
+        for item in self.gitList:
+            self.gitListMap[item.lower()] = item
 
     @commands.command(name="study",  aliases=['s'], description="Gets a random image from the Github repo", usage="study\nstudy <category>")
     async def study(self, ctx, catergory=""):
@@ -28,7 +31,8 @@ class Github_Commands(commands.Cog):
             await ctx.send(embed=createEmbeded(title="Random Image", desc="", color=discord.Color.blue(), image=(image_url + "?raw=true"), url=image_url))
             return
         else:
-            if(catergory in self.gitList):
+            if (catergory.lower() in self.gitListMap):
+                catergory = self.gitListMap[catergory.lower()]
                 imageSet = (self.aghpbRepo.get_contents(catergory))
                 image_url = (
                     (imageSet[random.randrange(0, len(imageSet))]).html_url)
